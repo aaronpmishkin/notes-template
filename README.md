@@ -1,3 +1,3 @@
 # notes-template
 
-Simple LaTex template for notes.
+Simple LaTeX template for notes.
