@@ -6,40 +6,65 @@
 \usepackage{notes}
 
 %  math symbols
-\usepackage{amsmath}
-\usepackage{amssymb}
-\usepackage{mathtools}
-\usepackage{amsthm}
-\usepackage{centernot}
-
-\usepackage{hyperref}
-
+\usepackage{amsmath}    % ams math
+\usepackage{amssymb}    % ^^ 
+\usepackage{amsthm}     % ^^
+\usepackage{mathtools}  % additional tools
+\usepackage{centernot}  % nice /not commands
 \usepackage{xfrac}      % nice fractions
 \usepackage{bbm}        % indicators
+
+
+\usepackage[ruled, vlined]{algorithm2e} % algorithm environments 
+\usepackage{enumitem}   % better enums
+\usepackage{hyperref}   % internal referencing
+
 \usepackage{parskip}    % paragraph formatting
-\usepackage{todonotes}  % TODOs
+\usepackage{todonotes}  % inline todo notes 
 
 \usepackage[numbers,sort&compress]{natbib}     % bibliography management
 
 % load macros and pre-defined symbols
 \input{macros/math}
 
-\title{Notes}
-\author{}
+\title{}
+\author{Aaron Mishkin}
 \date{}
 
 \begin{document}
 
 \maketitle
 
-\newpage
+\section{}
 
-\bibliographystyle{plainnat}
-\bibliography{refs}
+%% Templates %%
+\iffalse
 
-\newpage
+    %% Bibliography %%
 
-\appendix
+    \bibliographystyle{plainnat}
+    \bibliography{refs}
 
+    %% ============ %%
+
+
+    %% Algorithm Block %%
+
+    \setlength{\algomargin}{1em}
+    \begin{algorithm}[t]
+        \SetAlgoLined
+        \KwIn{   }                            %% arguments
+        \For{\(k = 0 \ldots K - 1\) }{  %% loops
+            %% contents here %% 
+        }
+        \Return{   }              %% return values 
+%%
+        \caption{}
+        \label{}
+    \end{algorithm}
+
+    %% ############## %%
+
+\fi
 
 \end{document}
