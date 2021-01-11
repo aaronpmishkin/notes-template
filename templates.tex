@@ -26,6 +26,33 @@
         \label{}
     \end{algorithm}
 
-    %% ############## %%
+    %% ================ %%
 
+
+    %% PGFplots %%
+
+    % define constants
+    \pgfmathsetmacro{\dimension}{20}
+    % plot
+    \begin{tikzpicture}[scale=1, 
+      declare function={
+          sublinear(\x) = 1/(\x*\x);
+          linear(\x)    = \dimension*ln(1/\x); 
+      }
+    ]
+        \begin{axis}[
+            axis x line = bottom, axis y line = left, 
+            ymin=0, ymax=100,  ylabel=Iteration Complexity,
+            xmin=0, xmax=1,    xlabel=Accuracy $\epsilon$,
+            legend entries={subgradient descent, center-of-gravity}
+        ]
+            \addplot[domain=1e-2:1, samples=100, primary]{sublinear(x)};
+            \addplot[domain=1e-2:1, samples=100, secondary]{linear(x)};
+
+            \draw[color=blue, style=solid, line width=1pt] (axis cs:1/\dimension^0.5,0) -- (axis cs:1/\dimension^0.5,100);
+
+            \node[label={0: $\epsilon = \inv{\sqrt{d}} $}] at (axis cs:1/\dimension^0.5,50) {};
+        \end{axis}
+    \end{tikzpicture}%
+        
 \fi
