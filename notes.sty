@@ -2,10 +2,14 @@
 %% Maintainer: Aaron Mishkin <amishkin@cs.stanford.edu>
 
 % page dimensions
-\usepackage[left=1in,right=1in,bottom=1.25in,top=1.25in]{geometry}
+\RequirePackage[left=1in,right=1in,bottom=1.25in,top=1.25in]{geometry}
+
+% silence annoying warnings
+\RequirePackage{silence}
+\WarningFilter{remreset}{The remreset package}
 
 % formatting
-\usepackage{fancyhdr}
+\RequirePackage{fancyhdr}
 
 % configure header
 \pagestyle{fancy}
@@ -24,7 +28,7 @@
 \frenchspacing
 
 % bibliography management
-\usepackage[backend=biber, style=alphabetic, citestyle=authoryear, natbib=true]{biblatex}
+\RequirePackage[backend=biber, style=alphabetic, citestyle=authoryear, natbib=true]{biblatex}
 
 % src: http://codydunne.blogspot.com/2012/01/suppressing-bibtex-fields-for-specific.html 
 
