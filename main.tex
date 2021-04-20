@@ -22,7 +22,7 @@
 \usepackage{parskip}    % paragraph formatting
 \usepackage{todonotes}  % inline todo notes 
 
-\usepackage[numbers,sort&compress]{natbib}     % bibliography management
+\addbibresource{refs.bib}
 
 %% load macros and pre-defined symbols
 \input{macros/math}
@@ -41,5 +41,7 @@
 \maketitle
 
 \section{}
+
+\printbibliography[]
 
 \end{document}
