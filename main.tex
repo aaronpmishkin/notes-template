@@ -111,10 +111,10 @@ That is, the rows of \( X \) are linearly independent.
 \end{proposition}
 \begin{proof}
 	Let \( \bar w \in \text{relint} (\calK_i) \), which exists since the relative interior is non-empty.
-	Let \( \tilde X \) denote the sub-matrix formed by the rows of \( X \) for which \( [D_i]_{jj} x_j^\top \bar w = 0 \).
-	Since \( X \) is full-rank and \( n \geq d \), the rows of \( X \) are linearly independent and the rows of \( \tilde X \) are also linearly independent.
-	Let \( x_k \) be an arbitrary row of \( \tilde X \) such that \( x_k \neq 0 \) and define \( z_k \) to be component of \( x_k \) is which is orthogonal to the other rows of \( \tilde X \).
-	Clearly such a vector exists by linear independence.
+	Assume that \( [D_i]_{jj} x_j^\top \bar w = 0 \) for at least one \( j \in [n] \) and let \( \tilde X \) denote the sub-matrix formed by the rows of \( X \) for which this inequality is tight.
+	Since \( X \) is full-rank and \( n \geq d \), the rows of \( X \) are linearly independent and the rows of \( \tilde X \) are trivially linearly independent.
+	Let \( x_k \) be an arbitrary row of \( \tilde X \) (noting \( x_k \neq 0 \) by linear independent) and define \( z_k \) to be the component of \( x_k \) which is orthogonal to the remaining rows of \( \tilde X \).
+	Clearly such a vector exists since the rows of \( \tilde X \) are linearly independent.
 	Now, define \( w' = \bar w + [D_i]_{jj} z_k \) to obtain
 	\[
 		[D_i]_{kk} x_k^\top w' = [D_i]_{kk} x_k^\top \bar w + \norm{z_k}_2^2 = \norm{z_k}_2^2 > 0,
@@ -124,7 +124,15 @@ That is, the rows of \( X \) are linearly independent.
 		[D_i]_{jj} x_j^\top w' = [D_i]_{jj} x_{j}^\top \bar w +  [D_i]_{jj} [D_i]_{kk} x_{j}^\top z_k = 0.
 	\]
 	This contradicts \( \bar w \in \text{relint} (\calK_i) \).
-	We conclude that no inequality can be tight and it is easy to show \( \text{dim} \; \text{aff} (\calK_i) = d \).
+	We deduce that \( [D_i]_{jj} x_j^\top \bar w > 0 \) for all \( j \in [n] \).
+
+	Noting that the rows of \( X \) span an \( n \)-dimensional subspace by linear independence,
+	let \( y_{1}, \ldots, y_{d-n} \) be arbitrary vectors spanning the orthogonal complement, \( \text{row}(X)^\perp \).
+	Clearly \( \bar w + y_{k} \in \calK_i \) for each \( k \in [d-n] \) since \( x_j \perp y_k \) for all \( j, k \in [n] \times [d-n] \).
+	Moreover, for \( \epsilon > 0 \) small enough, \( \bar w + \epsilon x_{j} \in \calK_i \) for each \( j \in [n] \) since \( \bar w \) is a relative interior point for which each of the cone constraints holds strictly.
+    Thus, \( \calK_i - \bar w\) contains a basis for \( \R^d \) and \( \text{dim aff} (\calK_i) = d \).
+	\autoref{lemma:affine-characterization} now gives the desired result.
+
 \end{proof}
 
 \printbibliography[]
