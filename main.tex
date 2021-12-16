@@ -105,7 +105,7 @@ which does not have affine dimension \( d \).
 
 We can establish \( \calK_i - \calK_i = \R^d \) under the restrictive condition that \( n \geq d \) and \( X \) is full-rank.
 That is, the rows of \( X \) are linearly independent.
-\begin{proposition}
+\begin{proposition}\label{prop:linearly-independent-cone}
 	Suppose that \( n \geq d \) and \( X \) is full-rank.
 	Then \( \calK_i - \calK_i = \R^d \).
 \end{proposition}
@@ -130,10 +130,14 @@ That is, the rows of \( X \) are linearly independent.
 	let \( y_{1}, \ldots, y_{d-n} \) be arbitrary vectors spanning the orthogonal complement, \( \text{row}(X)^\perp \).
 	Clearly \( \bar w + y_{k} \in \calK_i \) for each \( k \in [d-n] \) since \( x_j \perp y_k \) for all \( j, k \in [n] \times [d-n] \).
 	Moreover, for \( \epsilon > 0 \) small enough, \( \bar w + \epsilon x_{j} \in \calK_i \) for each \( j \in [n] \) since \( \bar w \) is a relative interior point for which each of the cone constraints holds strictly.
-    Thus, \( \calK_i - \bar w\) contains a basis for \( \R^d \) and \( \text{dim aff} (\calK_i) = d \).
+	Thus, \( \calK_i - \bar w\) contains a basis for \( \R^d \) and \( \text{dim aff} (\calK_i) = d \).
 	\autoref{lemma:affine-characterization} now gives the desired result.
 
 \end{proof}
+
+\autoref{prop:linearly-independent-cone} requires \( X \) to have full row-rank, which is fairly restrictive. 
+However, avoiding the counterexample we gave earlier requires only that no two rows of \( X \) are negatively collinear.
+The main difficulty in extending \autoref{prop:linearly-independent-cone} to this more general setting is showing that no constraints are tight at \( \bar w \).
 
 \printbibliography[]
 
