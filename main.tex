@@ -30,7 +30,7 @@
 %% (optional) load tikz and PGFplots
 % \input{macros/plots}
 
-\title{}
+\title{Approximating ReLU Networks by Conic Decomposition}
 \author{Aaron Mishkin\\ \texttt{amishkin@cs.stanford.edu}}
 \date{}
 
@@ -38,7 +38,94 @@
 
 \maketitle
 
-\section{}
+\section{Introduction}
+
+Recall the convex re-formulation of a two-layer ReLU MLP is
+\begin{equation}\label{eq:convex-relu-mlp}
+	\begin{aligned}
+		p^* = \min_{v, w} \, & \mathcal{L}\Big(  \sum_{D_i \in \tilde \calD}^P   D_i X (v_i  -  w_i), y\Big) + \lambda \sum_{D_i \in \tilde \calD} \norm{v_i}_2 + \norm{w_i}_2 \\
+		                     & \text{s.t.} \, \rbr{2 D_i - I_n} X v_i \succeq 0, \, \rbr{2 D_i - I_n} X w_i \succeq 0.
+	\end{aligned}
+\end{equation}
+Introduce the parameter \( u_i = v_i - w_i \) to obtain \( u_i + w_i = v_i \) and the equivalent problem
+\begin{equation}\label{eq:reparameterized-problem}
+	\begin{aligned}
+		p^* = \min_{u, w} \, & \mathcal{L}\Big(  \sum_{D_i \in \tilde \calD}^P   D_i X u_i, y\Big) + \lambda \sum_{D_i \in \tilde \calD} \norm{u_i + w_i}_2 + \norm{w_i}_2 \\
+		                     & \text{s.t.} \, \rbr{2 D_i - I_n} X (u_i + w_i) \succeq 0, \, \rbr{2 D_i - I_n} X w_i \succeq 0.
+	\end{aligned}
+\end{equation}
+The regularization terms for this problem are not easily handled, so we form the following relaxation:
+\begin{equation}\label{eq:relaxation}
+	\begin{aligned}
+		r^* = \min_{u, w} \, & \mathcal{L}\Big(  \sum_{D_i \in \tilde \calD}^P   D_i X u_i, y\Big) + \lambda \sum_{D_i \in \tilde \calD} \norm{u_i}_2 \\
+	\end{aligned}
+\end{equation}
+Triangle inequality implies \( \norm{u_i}_2 = \norm{u_i + w_i - w_i}_2 \leq \norm{u_i + w_i}_2 + \norm{w_i}_2 \), from which we deduce \( r^* \leq p^* \).
+Finally, we observe that Problem~\ref{eq:relaxation} is equivalent to the Gated ReLU training problem when the constraints are dropped.
+
+\section{Conic Decompositions}
+
+For each \( D_i \in \calD_X \), let \( \calK_i = \cbr{w : (2D_i - I) X w \geq 0} \).
+Since there exists \( w_i \) generating \( D_i \),
+\[
+	D_i = \text{diag}\rbr{\mathbbm{1}\rbr{X w_i > 0}},
+\]
+the cone \( \calK_i \) is non-empty.
+Moreover, it is clearly closed and convex.
+Thus, \( \text{relint} (\calK_i) \) is non-empty.
+By definition, \( u_i = v_i - w_i \), where \( w_i, v_i \in \calK_i \).
+That is, \( u_i \in \calK_i - \calK_i \).
+It is natural to ask if \( \calK_i - \calK_i = \R^d \), in which case \( u_i \) is unconstrained.
+
+\begin{lemma}\label{lemma:affine-characterization}
+	The affine dimension of \( \calK_i \) is \( d \) if and only if \( \calK_i - \calK_i = \R^d \).
+\end{lemma}
+\begin{proof}
+	Let \( x \in \text{aff} (\calK_i) \).
+	Then \( x = \sum_{j=1}^m \alpha_j y_j \), \( y_j \in \calK_i \).
+	If \( \alpha_j \geq 0 \), then \( \alpha_j y_j \in \calK_i \) since \( \calK_i \) is a cone.
+	Otherwise, \( \alpha_j y_j \in - \calK_i \).
+	An inductive argument implies \( x \in \calK_i - \calK_i \) and \( \text{aff} (\calK_i) \subseteq \calK_i - \calK_i \).
+	The reverse inclusion is trivial, so we conclude that \( \text{aff} (\calK_i) = \calK_i - \calK_i \).
+	Since \( 0 \in \text{aff} (\calK_i) \), this set is actually a subspace.
+	If \( \text{dim} \; \text{aff} (\calK_i) = d \), then we must have \( \text{aff} (\calK_i) = \calK_i - \calK_i = \R^d \).
+
+	If \( \text{dim} \; \text{aff} (\calK_i) < d \), then \( \text{aff} (\calK_i) = \calK_i - \calK_i \subset \R^d \) must hold and we have shown the reverse implication by the contrapositive.
+\end{proof}
+
+Unfortunately, it is possible that the affine hull of \( K_i \) is only a subspace.
+Let \( d = 2 \) and consider the vectors \( x_1 = [1, 0], x_2 = [-1, 0], x_3 = [0, 1] \).
+The activation pattern \( D_i = \text{diag}\rbr{0, 0, 1} \) is attained only in the subspace \( \cbr{ w : w_1 = 0 } \).
+In particular,
+\[
+	\calK_i = \cbr{w : w_1 = 0, w_2 \geq 0}.
+\]
+which does not have affine dimension \( d \).
+\autoref{lemma:affine-characterization} completes the counter-example.
+
+We can establish \( \calK_i - \calK_i = \R^d \) under the restrictive condition that \( n \geq d \) and \( X \) is full-rank.
+That is, the rows of \( X \) are linearly independent.
+\begin{proposition}
+	Suppose that \( n \geq d \) and \( X \) is full-rank.
+	Then \( \calK_i - \calK_i = \R^d \).
+\end{proposition}
+\begin{proof}
+	Let \( \bar w \in \text{relint} (\calK_i) \), which exists since the relative interior is non-empty.
+	Let \( \tilde X \) denote the sub-matrix formed by the rows of \( X \) for which \( [D_i]_{jj} x_j^\top \bar w = 0 \).
+	Since \( X \) is full-rank and \( n \geq d \), the rows of \( X \) are linearly independent and the rows of \( \tilde X \) are also linearly independent.
+	Let \( x_k \) be an arbitrary row of \( \tilde X \) such that \( x_k \neq 0 \) and define \( z_k \) to be component of \( x_k \) is which is orthogonal to the other rows of \( \tilde X \).
+	Clearly such a vector exists by linear independence.
+	Now, define \( w' = \bar w + [D_i]_{jj} z_k \) to obtain
+	\[
+		[D_i]_{kk} x_k^\top w' = [D_i]_{kk} x_k^\top \bar w + \norm{z_k}_2^2 = \norm{z_k}_2^2 > 0,
+	\]
+	and, for \( j \neq k \),
+	\[
+		[D_i]_{jj} x_j^\top w' = [D_i]_{jj} x_{j}^\top \bar w +  [D_i]_{jj} [D_i]_{kk} x_{j}^\top z_k = 0.
+	\]
+	This contradicts \( \bar w \in \text{relint} (\calK_i) \).
+	We conclude that no inequality can be tight and it is easy to show \( \text{dim} \; \text{aff} (\calK_i) = d \).
+\end{proof}
 
 \printbibliography[]
 
