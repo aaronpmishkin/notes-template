@@ -16,6 +16,7 @@
 
 \usepackage{enumitem}   % better enums
 \usepackage{hyperref}   % internal referencing
+\usepackage[noabbrev, capitalize]{cleveref}   % internal referencing
 
 \usepackage{parskip}    % paragraph formatting
 \usepackage{todonotes}  % inline todo notes 
@@ -27,10 +28,39 @@
 %% macros for paragraph mode
 \input{macros/paragraph}
 
+
+\newcommand{\Wone}{W^{(1)}}
+\newcommand{\Wl}{W^{(l)}}
+
+\newcommand{\wone}{W^{(1)}}
+\newcommand{\wtwo}{W^{(2)}}
+\newcommand{\wthree}{W^{(3)}}
+
+\newcommand{\Dl}{D^{(l)}}
+\newcommand{\Dzero}{D^{(0)}}
+\newcommand{\Done}{D^{(1)}}
+\newcommand{\Dtwo}{D^{(2)}}
+
+\newcommand{\calDl}{\calD^{(l)}}
+\newcommand{\calDzero}{\calD^{(0)}}
+\newcommand{\calDone}{\calD^{(1)}}
+\newcommand{\calDtwo}{\calD^{(2)}}
+
+\newcommand{\calKl}{\calK^{(l)}}
+\newcommand{\calKzero}{\calK^{(0)}}
+
+\newcommand{\Xl}{X^{(l)}}
+\newcommand{\Xzero}{X^{(0)}}
+\newcommand{\Xone}{X^{(1)}}
+
+\newcommand{\Zl}{Z^{(l)}}
+\newcommand{\Zzero}{Z^{(0)}}
+\newcommand{\Zone}{Z^{(1)}}
+
 %% (optional) load tikz and PGFplots
 % \input{macros/plots}
 
-\title{}
+\title{Convex Reformulations of Deep Neural Networks}
 \author{Aaron Mishkin\\ \texttt{amishkin@cs.stanford.edu}}
 \date{}
 
@@ -38,9 +68,417 @@
 
 \maketitle
 
-\begin{abstract}
+\section{Introduction}
 
-\end{abstract}
+Let \( X \in \R^{n \times d_0} \) be a matrix of observations and \( y \in
+\R^{n \times c} \) a matrix of \( c \)-dimensional responses for each
+observation.
+This setup covers both multi-class classification and regression with
+vector-valued targets.
+We are interested fully-connected ReLU neural networks with arbitrarily many
+layers.
+Let \( \Wl \in \R^{d_{l-1} \times d_l} \) be a matrix of weights.
+The activations at layer $l$ are defined to be,
+\begin{equation}
+    \Zl = \rbr{Z^{(l-1)} \Wl}_+,
+\end{equation}
+where we take \( \Zzero = X \) and \(
+\rbr{\cdot}_+ \) is ReLU activation function defined element-wise as \(
+\rbr{z}_+ = \max\cbr{z, 0} \).
+Then a fully-connected neural network with \( k \)-layers has the prediction
+function given by,
+\begin{equation}
+    f_\Theta(X) = Z_{(k-1)}
+    W^{(k)},
+\end{equation}
+where \( W^{(k)} \in \R^{d_{k-1} \times c} \) ensures
+that the prediction is of the right dimension.
+Here, \( \Theta = \cbr{\Wone, \ldots, W^{(k)}} \) denotes the collection of
+weights for the network.
+If \( k = 3 \), this recursive definition can be unrolled to give an
+explicit predictor function,
+\begin{equation}
+    f_\Theta(X) = \rbr{\rbr{X W^{(1)}}_+ W^{(2)}}_+ W^{(3)}.
+\end{equation}
+In this note, we focus on models trained using the squared-error loss function
+and weight-decay regularization.
+That is, problems of the form,
+\begin{equation}
+    \Theta^* \in \argmin_{\Theta} \half \norm{f_\Theta(X) - y}_2^2 +
+    \frac{\lambda}{2} \sum_{l=1}^k \norm{\Wl}_F^2,
+\end{equation}
+where \( \lambda \geq 0 \) controls the strength of the regularization.
+
+Our analysis will work by considering the space of activation patterns that
+can be attained by a single ReLU neuron.
+Given a matrix \( A \in \R^{a, b} \), set of activation patterns for \( A \) is
+\begin{equation}
+    \calD(A) = \cbr{ \text{diag}\rbr{\mathbbm{1}\rbr{ X w \geq 0}}: w \in \R^d }.
+\end{equation}
+Note that each pattern \( D_i \in \calD(A) \) is a diagonal matrix with \(
+[D_i]_{jj} = 1 \) if \( x_i^\top w \geq 0 \) and \( 0 \) otherwise.
+Each activation pattern is associated with a convex cone of vectors which
+are consistent with that pattern,
+\begin{equation}
+    \calK_i(A) = \cbr{w : (2D_i - I) X w \geq 0 }.
+\end{equation}
+It is straightforward to show that \( w \in \calK_i(A) \) if and only if \(
+(Aw)_+ = D_i A w \), i.e. \( D_i \) linearizes the ReLU activation.
+
+To reduce the burden of notation, let \( \Xzero = X \) and \( \calDzero =
+\calD(X) \).
+Let \( \Dzero_i \in \calDzero \) denote the activation patterns associated
+with \( \Xzero \), \( \calKzero_i \) the associated cone.
+The total number of activation patterns is \( p_0 = \abs{\calDzero} \).
+Let \( a_0 = d_0 \) so that \( \Xzero \in \R^{n \times a_0} \).
+Then, we can recursively define,
+\begin{equation}
+    \Xl =
+    \begin{bmatrix}
+        D_0^{(l-1)} X^{(l-1)} & \ldots & D^{(l-1)}_{p_{(l-1)}} X^{(l-1)}
+    \end{bmatrix}
+    ,
+\end{equation}
+\( \calDl = \calD(\Xl) \), \( \Dl_i \in \calDl \) where \(
+\calKl_i \) is the associated cone, and \( p_l = \abs{\calD^l} \).
+Note that \( \Xl \in \R^{n \times p_{l-1} \cdot a_{l-1}} \), which implies \(
+a_l = p_{l-1} \cdot a_{l-1} \).
+These objects will allow us to reason about activation patterns in the \(
+l^{\text{th}} \) layer of a \( k \)-layer network.
+
+\section{Layer Elimination Lemma}
+
+Our goal in this section is to develop a basic lemma which merges layers in
+the neural network.
+Iteratively applying this lemma will then allow us to derive a convex
+reformulation.
+
+\begin{lemma}
+    Let \( v^{(l)} \in \R^{d_l \cdot a_{l-1}} \) such that
+    \( v^{(l)} \in \calC^{(l)} \), where \( \calC^{(l)} \) is a closed convex
+    cone.
+    Assume \( d_l \geq d_{l+1} a_l p_l \).
+    Then the activations at layer \( l+1 \) are given by,
+    \begin{equation}\label{eq:assumed-structure}
+        Z_{j}^{(l+1)} = \rbr{\sum_{i = 1}^{d_{l}} (X^{(l-1)} v^{(l)}_i)_+
+        W_{ij}^{(l+1)}}_+.
+    \end{equation}
+    if and only if the post-activations are also equal to,
+    \begin{equation}
+        Z_{j}^{(l+1)} = \rbr{X^{(l)} v^{(l+1)}_{j}}_+,
+    \end{equation}
+    for some
+    \begin{equation}
+        \begin{aligned}
+            v^{(l+1)} \in \calC^{(l+1)}
+            :=
+            \text{Cone} \bigg\{
+            v^{(l+1)} \in \R^{d_{l+1} \cdot a_l} :
+             & \exists \, v^{(l)} \in \calC^{(l)}
+            \text{ satisfying } v_{i}^{(l)} \in \calKl_i, \,                 \\
+             & \exists \, W^{(l+1)} \in \R^{d_l \times d_{l+1}},             \\
+             & \text{ s.t. } v^{(l+1)}_{ij} = v^{(l)}_{i} \cdot W_{ij}^{(l)}
+            \bigg\}.
+        \end{aligned}
+    \end{equation}
+\end{lemma}
+\begin{proof}
+    We start with the forward direction.
+    Let
+    \begin{equation}
+        v^{(l+1)}_{j} =
+        \begin{bmatrix}
+            \sum_{m \in \calI^{(l)}_0} v^{(l)}_{m} \cdot W_{mj}^{(l+1)} \\
+            \vdots                                                      \\
+            \sum_{m \in \calI^{(l)}_{p_l}} v^{(l)}_{m} \cdot W_{m j}^{(l+1)}
+        \end{bmatrix}
+        \quad \text{s.t.} \quad
+        \calI^{(l)}_{i} = \cbr{j \in [d_l] :
+            \Dl_i = \text{diag}\rbr{\mathbbm{1}(X^{(l-1)} v^{(l)}_j
+                \geq 0)}}.
+    \end{equation}
+    By re-writing \( v^{(l+1)} \) as a sum over blocks defined by \( \calDl_i \),
+    \[
+        v^{(l+1)}_{j} = \sum_{i=1}^{p_l}
+        \sum_{m \in \calI_i^{(l)}}
+        \begin{bmatrix}
+            0                        \\
+            \vdots                   \\
+            v_m^{(l)} W_{mj}^{(l+1)} \\
+            \vdots                   \\
+            0
+        \end{bmatrix},
+    \]
+    we see that \( v^{(l+1)} \) is a conic combination of vectors in \( \calC^{(l+1)} \).
+    Since \( \calC^{(l+1)} \) is itself a convex cone, we conclude
+    \( v^{(l+1)} \in \calC^{(l+1)} \) as required.
+
+    For convenience in the following computation, define
+    \( v_{ij}^{(l)} = \sum_{m \in \calI^{(l)}_i} v^{(l)}_{m} \cdot W_{mj}^{(l+1)} \).
+    By assumption, the activations are given by
+    \begin{align*}
+        Z_{j}^{(l+1)}
+         & = \rbr{\sum_{i = 1}^{d_{l}} (X^{(l-1)} v^{(l)}_i)_+
+        W_{ij}^{(l+1)}}_+                                                \\
+        \intertext{
+            For each \( v^{(l)}_i \), there exists an
+            activation pattern
+            \( \Dl_i = \text{diag}\rbr{\mathbbm{1}(X^{(l-1)} v^{(l)}_i \geq 0)} \)
+            such that \( \Dl_i X^{(l-1)} v^{(l)}_i = \rbr{X^{(l-1)} v^{(l)}_i}_+ \).
+            Thus, we obtain
+        }
+        Z_{j}^{(l+1)}
+         & = \rbr{\sum_{i = 1}^{d_{l}} \Dl_i X^{(l-1)}
+        v^{(l)}_i W_{ij}^{(l+1)}}_+                                      \\
+         & = \rbr{\sum_{i = 1}^{p_{l}} \Dl_i X^{(l-1)}
+        \sum_{m \in \calI^{(l)}_{i}} \sbr{v^{(l)}_m W_{mj}^{(l+1)}}}_+   \\
+         & = \rbr{\sum_{i = 1}^{p_{l}} \Dl_i X^{(l-1)} v^{(l+1)}_{ij}}_+ \\
+         & = \rbr{X^{(l)} v^{(l+1)}_{j}}_+.
+    \end{align*}
+    That completes the forward direction.
+
+    Now we prove the reverse implication.
+    Let \( v^{(l+1)} \in \calC^{(l+1)} \).
+    Then \( v^{(l+1)} \in \R^{d_{l+1} \cdot a_l} \).
+    By Carathéodory's theorem, every vector in \( \calC^{(l+1)} \) can be
+    represented as the conic combination of \( d_{l+1} \cdot a_l \) vectors
+    in
+    \[
+        \begin{aligned}
+            \calE^{(l+1)}
+            =
+            \bigg\{
+            v^{(l+1)} \in \R^{d_{l+1} \cdot a_l} :
+             & \exists \, v^{(l)} \in \calC^{(l)}
+            \text{ satisfying } v_{i}^{(l)} \in \calKl_i, \,                 \\
+             & \exists \, W^{(l+1)} \in \R^{d_l \times d_{l+1}},             \\
+             & \text{ s.t. } v^{(l+1)}_{ij} = v^{(l)}_{i} \cdot W_{ij}^{(l)}
+            \bigg\}.
+        \end{aligned}
+    \]
+    Thus, we obtain the representation,
+    \begin{equation}
+        v^{(l+1)}
+        = \sum_{m=1}^{d_{l+1} a_l} u_m^{(l+1)},
+        \quad \quad u_m^{(l+1)} \in \calE^{(l+1)}
+        \text{ for all } m \in \cbr{1, \ldots, d_{l+1} a_l}.
+    \end{equation}
+    Using this decomposition in the assumed expression for the activations,
+    \begin{align*}
+        Z_{j}^{(l+1)}
+         & = \rbr{X^{(l)} v^{(l+1)}_{j}}_+                              \\
+         & = \rbr{\sum_{m=1}^{d_{l+1} a_l} X^{(l)} u^{(l+1)}_{m, j}}_+  \\
+         & = \rbr{\sum_{m=1}^{d_{l+1} a_l} \sum_{i=1}^{p_l}
+        D_{i}^{(l)} X^{(l-1)} u^{(l+1)}_{m, i, j}}_+                    \\
+         & = \rbr{\sum_{m=1}^{d_{l+1} a_l} \sum_{i=1}^{p_l}
+        D_{i}^{(l)} X^{(l-1)} u^{(l)}_{m, i} \cdot W_{m, ij}^{(l+1)}}_+ \\
+         & = \rbr{\sum_{m=1}^{d_{l+1} a_l} \sum_{i=1}^{p_l}
+        \rbr{X^{(l-1)} u^{(l)}_{m, i}}_+ \cdot W_{m, ij}^{(l+1)}}_+,
+    \end{align*}
+    which matches \cref{eq:assumed-structure} if \( d_l \geq d_{l+1} a_l p_l \).
+
+    \begin{itemize}
+        \item
+              \textcolor{red}{Is there a representer theorem that we can use to
+                  bound the number of neurons?}
+
+        \item
+              \textcolor{red}{This required number of neurons is very loose in
+                  the two-layer scalar setting.  Can we use a version of
+                  Caratheodory's theorem restricted to an affine subspace to improve
+                  this?}
+    \end{itemize}
+
+\end{proof}
+
+\newpage
+
+\section{Old Notes}
+
+Consider the three-layer neural network with ReLU activation functions,
+\begin{equation}
+    \label{eq:three-layer-mlp}
+    f(X)
+    = ((X W^{(1)})_+ W^{(2)})_+ w^{(3)}
+    = \sum_{j = 1}^{m_2} \rbr{\sum_{i = 1}^{m_1} \rbr{X \wone_i}_+ \wtwo_{ji}}_+ \wthree_j,
+\end{equation}
+where \( \wone_i \in \R^{d} \), \( \wtwo_j \in \R^{m_1} \) and \( \wthree \in \R^{m_2} \).
+Given training set \( X, y \), the optimization problem for this neural network
+with least-squares loss and squared \( \ell_2 \) regularization is given by
+\begin{equation}
+    \label{eq:three-layer-problem}
+    \min
+    \half \left\|
+    \sum_{j = 1}^{m_2} \rbr{\sum_{i = 1}^{m_1} \rbr{X \wone_i}_+ \wtwo_{ji}}_+ \wthree_j
+    - y
+    \right\|_2^2
+    + \frac{\lambda}{2}
+    \sum_{i=1}^{m_1} \norm{\wone_i}_2^2
+    + \sum_{j=1}^{m_2} \norm{\wtwo_j}_2^2
+    + \sum_{j=1}^{m_2} \norm{\wthree_j}_2^2.
+\end{equation}
+Let's look at the regularization terms.
+First, observe that by changing the index of summation, \[ \sum_{j=1}^{m_2}
+    \norm{\wtwo_j}_2^2 = \sum_{i=1}^{m_1} \norm{\wtwo_{\cdot, i}}_2^2.
+\]
+Now applying Young's inequality twice, we obtain
+\begin{align*}
+    2 \sum_{j = 1}^{m_2} \norm{\wtwo_j}_2 \norm{\wthree_j}_2
+     & \leq \sum_{j=1}^{m_2} \norm{\wtwo_j}_2^2
+    + \sum_{j=1}^{m_2} \norm{\wthree_j}_2^2     \\
+    2 \sum_{i = 1}^{m_1} \norm{\wone_i}_2 \norm{\wtwo_{\cdot, i}}_2
+     & \leq \sum_{i=1}^{m_1} \norm{\wone_i}_2^2
+    + \sum_{i=1}^{m_1} \norm{\wtwo_{\cdot, i}}_2^2.
+\end{align*}
+Equality can be achieved by choosing \( \norm{\wtwo_j}_2 = \norm{\wthree_j}_2
+\) for every \( j \in [m_2] \) and \( \norm{\wone_i}_2 = \norm{\wtwo_{\cdot,
+        i}}_2 \) for every \( i \in [m_1] \), respectively.
+Since the ReLU activation function is positively homogeneous, we deduce that
+any optimal solution \( \rbr{\wone, \wtwo, \wthree} \) must satisfy these
+equalities as otherwise the regularization term could be decreased without
+changing the loss.
+
+Using this observation, we rewrite the training problem as the following
+constrained program:
+\begin{align*}
+    \min
+     & \half \left\|
+    \sum_{j = 1}^{m_2} \rbr{\sum_{i = 1}^{m_1} \rbr{X \wone_i}_+ \wtwo_{ji}}_+ \wthree_j
+    - y
+    \right\|_2^2
+    + \frac{\lambda}{2}
+    \sum_{i=1}^{m_1} \norm{\wone_i}_2^2
+    + \sum_{j=1}^{m_2} \norm{\wtwo_j}_2^2
+    + \sum_{j=1}^{m_2} \norm{\wthree_j}_2^2                     \\
+     & =
+    \min_{\norm{\wtwo_j}_2 = \norm{\wthree_j}_2}
+    \half \left\|
+    \sum_{j = 1}^{m_2} \rbr{\sum_{i = 1}^{m_1} \rbr{X \wone_i}_+ \wtwo_{ji}}_+ \wthree_j
+    - y
+    \right\|_2^2
+    + \frac{\lambda}{2}
+    \sum_{i=1}^{m_1} \norm{\wone_i}_2^2
+    + 2\sum_{j=1}^{m_2} \norm{\wtwo_j}_2^2                      \\
+     & =
+    \min_{\norm{\wtwo_j}_2 = \norm{\wthree_j}_2}
+    \half \left\|
+    \sum_{j = 1}^{m_2} \rbr{\sum_{i = 1}^{m_1} \rbr{X \wone_i}_+ \wtwo_{ji}}_+ \wthree_j
+    - y
+    \right\|_2^2
+    + \frac{\lambda}{2}
+    \sum_{i=1}^{m_1} \norm{\wone_i}_2^2
+    + 2\sum_{i=1}^{m_1} \norm{\wtwo_{\cdot, i}}_2^2             \\
+     & =
+    \min_{\norm{\wtwo_j}_2 = \norm{\wthree_j}_2}
+    \half \left\|
+    \sum_{j = 1}^{m_2} \rbr{\sum_{i = 1}^{m_1} \rbr{X \wone_i}_+ \wtwo_{ji}}_+ \wthree_j
+    - y
+    \right\|_2^2
+    + \sqrt{2}\lambda
+    \sum_{i=1}^{m_1} \norm{\wone_i}_2 \norm{\wtwo_{\cdot, i}}_2 \\
+     & =
+    \min_{\norm{\wtwo_j}_2 = \norm{\wthree_j}_2 = 1}
+    \half \left\|
+    \sum_{j = 1}^{m_2} \rbr{\sum_{i = 1}^{m_1} \rbr{X \wone_i}_+ \wtwo_{ji}}_+ \wthree_j
+    - y
+    \right\|_2^2
+    + \sqrt{2}\lambda
+    \sum_{i=1}^{m_1} \norm{\wone_i}_2,
+\end{align*}
+where the last equality again uses positive homogeneity of the ReLU activation
+function.
+
+Now let's look at linearizing the activation functions.
+Let \( \Done_i = \text{diag}\rbr{\mathbbm{1}(X \wone_i \geq 0)} \).
+Then, we have
+\begin{align*}
+    \rbr{\sum_{i = 1}^{m_1} \rbr{X \wone_i}_+ \wtwo_{ji}}_+
+     & = \rbr{\sum_{i = 1}^{m_1} \Done_i X \wone_i \wtwo_{ji}}_+ \\
+     & = \rbr{\sum_{i = 1}^{m_1} \Done_i X u_{ij}}_+,
+\end{align*}
+where \( u_{ij} = \wone_i \wtwo_{ji} \in \R^{d} \).
+Define the feature matrix with first-order splits to be,
+\[
+    \Xone =
+    \begin{bmatrix}
+        \Done_1 X & \Done_2 X & \ldots \Done_{m_1}
+        X
+    \end{bmatrix}
+    , \] and let \( u_j \in \R^{|d \times m_1|} \) be the
+concatenation of the \( u_{ij} \) vectors.
+Then the activation becomes
+\begin{align*}
+    \rbr{\sum_{i = 1}^{m_1} \Done_i X u_{ij}}_+
+     & = \rbr{\Xone u_j}_+  \\
+     & = \Dtwo_j \Xone u_j,
+\end{align*}
+where \( \Dtwo_j = \text{diag}\rbr{\mathbbm{1}(\Xone u_j \geq 0)} \).
+Plugging this into the expression for the neural network prediction
+function gives,
+\begin{align*}
+    f(X)
+     & = \sum_{j = 1}^{m_2} \Dtwo_j \Xone u_j \wthree_j \\
+     & = \sum_{j = 1}^{m_2} \Dtwo_j \Xone v_j,
+\end{align*}
+where \( v_j = u_j \cdot \wthree_j \).
+We can plug this back into the training problem to obtain a new optimization
+program,
+\begin{equation}
+    \begin{aligned}
+        \min
+         & \half \left\|
+        \sum_{i = 1}^{m_1} \sum_{j = 1}^{m_2} \Dtwo_j \Done_i X v_{ij}
+        - y
+        \right\|_2^2
+        + \sqrt{2}\lambda
+        \sum_{i=1}^{m_1} \sum_{j = 1}^{m_2}
+        \norm{v_{ij}}_2 |\wtwo_{ji}|      \\
+         & \hspace{2em} \text{s.t.} \quad
+        v_{ij} = \pm \wone_{i} \cdot \wtwo_{ji}, \quad \norm{\wtwo_{\cdot, i}}_2 = 1,
+    \end{aligned}
+\end{equation}
+where we have used the fact that \( \sum_{j=1}^{m_2} \sbr{\wtwo_{ji}}^2 = 1 \) and
+\[
+    \sum_{i=1}^{m_1} \norm{\wone_i}_2
+    = \sum_{i=1}^{m_1} \sum_{j=1}^{m_2} \norm{\wone_i}_2 \sbr{\wtwo_{ji}}^2
+    = \sum_{i=1}^{m_1} \sum_{j=1}^{m_2} \norm{v_{ij}}_2 \wtwo_{ji}.
+\]
+Alternatively, we can define the regularizer,
+\[
+    R(v) =
+    \begin{cases}
+        \sum_{i=1}^{m_1}
+        \norm{\wone_{i}}_2
+         & \mbox{if \( \exists \wone, \wtwo,
+        \norm{\wtwo_{\cdot, i}}_2 = 1 \) such that \( v_{ij} = \pm \wone_{i} \wtwo_{ji} \)} \\
+        +\infty
+         & \mbox{otherwise.}
+    \end{cases}
+\]
+In this case, we can write the optimization problem slightly differently as
+\begin{equation}
+    \begin{aligned}
+        \min
+         & \half \left\|
+        \sum_{i = 1}^{m_1} \sum_{j = 1}^{m_2} \Dtwo_j \Done_i X v_{ij}
+        - y
+        \right\|_2^2
+        + \sqrt{2}\lambda R(v).
+    \end{aligned}
+\end{equation}
+
+\section{Questions}:
+
+\begin{itemize}
+    \item It looks to me like the low-rank factorization of the \( v \) tensor
+          yields a non-convex set.
+          Can we handle this some way?
+
+    \item Can we relax the constraint on \( \wtwo \) to be the unit ball
+          instead of the unit shell?
+
+    \item Is there a better way to express the regularization?
+\end{itemize}
 
 \clearpage
 \newpage
