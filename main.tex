@@ -48,6 +48,7 @@
 
 \newcommand{\calKl}{\calK^{(l)}}
 \newcommand{\calKzero}{\calK^{(0)}}
+\newcommand{\calKone}{\calK^{(1)}}
 
 \newcommand{\Xl}{X^{(l)}}
 \newcommand{\Xzero}{X^{(0)}}
@@ -125,12 +126,12 @@ are consistent with that pattern,
 It is straightforward to show that \( w \in \calK_i(A) \) if and only if \(
 (Aw)_+ = D_i A w \), i.e. \( D_i \) linearizes the ReLU activation.
 
-To reduce the burden of notation, let \( \Xzero = X \) and \( \calDzero =
+To reduce the burden of notation, let \( \Xone = X \) and \( \calDone =
 \calD(X) \).
-Let \( \Dzero_i \in \calDzero \) denote the activation patterns associated
-with \( \Xzero \), \( \calKzero_i \) the associated cone.
-The total number of activation patterns is \( p_0 = \abs{\calDzero} \).
-Let \( a_0 = d_0 \) so that \( \Xzero \in \R^{n \times a_0} \).
+Let \( \Done_i \in \calDone \) denote the activation patterns associated
+with \( \Xone \), \( \calKone_i \) the associated cone.
+The total number of activation patterns is \( p_1 = \abs{\calDone} \).
+Let \( a_1 = d_0 \) so that \( \Xone \in \R^{n \times a_1} \).
 Then, we can recursively define,
 \begin{equation}
     \Xl =
@@ -154,18 +155,18 @@ Iteratively applying this lemma will then allow us to derive a convex
 reformulation.
 
 \begin{lemma}
-    Let \( v^{(l)} \in \R^{d_l \cdot a_{l-1}} \) such that
+    Let \( v^{(l)} \in \R^{d_l \cdot a_{l}} \) such that
     \( v^{(l)} \in \calC^{(l)} \), where \( \calC^{(l)} \) is a closed convex
     cone.
-    Assume \( d_l \geq d_{l+1} a_l p_l \).
+    Assume \( d_l \geq d_{l+1} a_{l+1} p_l \).
     Then the activations at layer \( l+1 \) are given by,
     \begin{equation}\label{eq:assumed-structure}
-        Z_{j}^{(l+1)} = \rbr{\sum_{i = 1}^{d_{l}} (X^{(l-1)} v^{(l)}_i)_+
+        Z_{j}^{(l+1)} = \rbr{\sum_{i = 1}^{d_{l}} (X^{(l)} v^{(l)}_i)_+
         W_{ij}^{(l+1)}}_+.
     \end{equation}
     if and only if the post-activations are also equal to,
     \begin{equation}
-        Z_{j}^{(l+1)} = \rbr{X^{(l)} v^{(l+1)}_{j}}_+,
+        Z_{j}^{(l+1)} = \rbr{X^{(l+1)} v^{(l+1)}_{j}}_+,
     \end{equation}
     for some
     \begin{equation}
@@ -173,7 +174,7 @@ reformulation.
             v^{(l+1)} \in \calC^{(l+1)}
             :=
             \text{Cone} \bigg\{
-            v^{(l+1)} \in \R^{d_{l+1} \cdot a_l} :
+            v^{(l+1)} \in \R^{d_{l+1} \cdot a_{l+1}} :
              & \exists \, v^{(l)} \in \calC^{(l)}
             \text{ satisfying } v_{i}^{(l)} \in \calKl_i, \,                 \\
              & \exists \, W^{(l+1)} \in \R^{d_l \times d_{l+1}},             \\
@@ -194,7 +195,7 @@ reformulation.
         \end{bmatrix}
         \quad \text{s.t.} \quad
         \calI^{(l)}_{i} = \cbr{j \in [d_l] :
-            \Dl_i = \text{diag}\rbr{\mathbbm{1}(X^{(l-1)} v^{(l)}_j
+            \Dl_i = \text{diag}\rbr{\mathbbm{1}(X^{(l)} v^{(l)}_j
                 \geq 0)}}.
     \end{equation}
     By re-writing \( v^{(l+1)} \) as a sum over blocks defined by \( \calDl_i \),
@@ -218,37 +219,37 @@ reformulation.
     By assumption, the activations are given by
     \begin{align*}
         Z_{j}^{(l+1)}
-         & = \rbr{\sum_{i = 1}^{d_{l}} (X^{(l-1)} v^{(l)}_i)_+
-        W_{ij}^{(l+1)}}_+                                                \\
+         & = \rbr{\sum_{i = 1}^{d_{l}} (X^{(l)} v^{(l)}_i)_+
+        W_{ij}^{(l+1)}}_+                                              \\
         \intertext{
             For each \( v^{(l)}_i \), there exists an
             activation pattern
-            \( \Dl_i = \text{diag}\rbr{\mathbbm{1}(X^{(l-1)} v^{(l)}_i \geq 0)} \)
-            such that \( \Dl_i X^{(l-1)} v^{(l)}_i = \rbr{X^{(l-1)} v^{(l)}_i}_+ \).
+            \( \Dl_i = \text{diag}\rbr{\mathbbm{1}(X^{(l)} v^{(l)}_i \geq 0)} \)
+            such that \( \Dl_i X^{(l)} v^{(l)}_i = \rbr{X^{(l)} v^{(l)}_i}_+ \).
             Thus, we obtain
         }
         Z_{j}^{(l+1)}
-         & = \rbr{\sum_{i = 1}^{d_{l}} \Dl_i X^{(l-1)}
-        v^{(l)}_i W_{ij}^{(l+1)}}_+                                      \\
-         & = \rbr{\sum_{i = 1}^{p_{l}} \Dl_i X^{(l-1)}
-        \sum_{m \in \calI^{(l)}_{i}} \sbr{v^{(l)}_m W_{mj}^{(l+1)}}}_+   \\
-         & = \rbr{\sum_{i = 1}^{p_{l}} \Dl_i X^{(l-1)} v^{(l+1)}_{ij}}_+ \\
-         & = \rbr{X^{(l)} v^{(l+1)}_{j}}_+.
+         & = \rbr{\sum_{i = 1}^{d_{l}} \Dl_i X^{(l)}
+        v^{(l)}_i W_{ij}^{(l+1)}}_+                                    \\
+         & = \rbr{\sum_{i = 1}^{p_{l}} \Dl_i X^{(l)}
+        \sum_{m \in \calI^{(l)}_{i}} \sbr{v^{(l)}_m W_{mj}^{(l+1)}}}_+ \\
+         & = \rbr{\sum_{i = 1}^{p_{l}} \Dl_i X^{(l)} v^{(l+1)}_{ij}}_+ \\
+         & = \rbr{X^{(l+1)} v^{(l+1)}_{j}}_+.
     \end{align*}
     That completes the forward direction.
 
     Now we prove the reverse implication.
     Let \( v^{(l+1)} \in \calC^{(l+1)} \).
-    Then \( v^{(l+1)} \in \R^{d_{l+1} \cdot a_l} \).
+    Then \( v^{(l+1)} \in \R^{d_{l+1} \cdot a_{l+1}} \).
     By Carathéodory's theorem, every vector in \( \calC^{(l+1)} \) can be
-    represented as the conic combination of \( d_{l+1} \cdot a_l \) vectors
+    represented as the conic combination of \( d_{l+1} \cdot a_{l+1} \) vectors
     in
     \[
         \begin{aligned}
             \calE^{(l+1)}
             =
             \bigg\{
-            v^{(l+1)} \in \R^{d_{l+1} \cdot a_l} :
+            v^{(l+1)} \in \R^{d_{l+1} \cdot a_{l+1}} :
              & \exists \, v^{(l)} \in \calC^{(l)}
             \text{ satisfying } v_{i}^{(l)} \in \calKl_i, \,                 \\
              & \exists \, W^{(l+1)} \in \R^{d_l \times d_{l+1}},             \\
@@ -259,34 +260,44 @@ reformulation.
     Thus, we obtain the representation,
     \begin{equation}
         v^{(l+1)}
-        = \sum_{m=1}^{d_{l+1} a_l} u_m^{(l+1)},
+        = \sum_{m=1}^{d_{l+1} a_{l+1}} u_m^{(l+1)},
         \quad \quad u_m^{(l+1)} \in \calE^{(l+1)}
         \text{ for all } m \in \cbr{1, \ldots, d_{l+1} a_l}.
     \end{equation}
     Using this decomposition in the assumed expression for the activations,
     \begin{align*}
         Z_{j}^{(l+1)}
-         & = \rbr{X^{(l)} v^{(l+1)}_{j}}_+                              \\
-         & = \rbr{\sum_{m=1}^{d_{l+1} a_l} X^{(l)} u^{(l+1)}_{m, j}}_+  \\
-         & = \rbr{\sum_{m=1}^{d_{l+1} a_l} \sum_{i=1}^{p_l}
-        D_{i}^{(l)} X^{(l-1)} u^{(l+1)}_{m, i, j}}_+                    \\
-         & = \rbr{\sum_{m=1}^{d_{l+1} a_l} \sum_{i=1}^{p_l}
-        D_{i}^{(l)} X^{(l-1)} u^{(l)}_{m, i} \cdot W_{m, ij}^{(l+1)}}_+ \\
-         & = \rbr{\sum_{m=1}^{d_{l+1} a_l} \sum_{i=1}^{p_l}
-        \rbr{X^{(l-1)} u^{(l)}_{m, i}}_+ \cdot W_{m, ij}^{(l+1)}}_+,
+         & = \rbr{X^{(l+1)} v^{(l+1)}_{j}}_+                                 \\
+         & = \rbr{\sum_{m=1}^{d_{l+1} a_{l+1}} X^{(l+1)} u^{(l+1)}_{m, j}}_+ \\
+         & = \rbr{\sum_{m=1}^{d_{l+1} a_{l+1}} \sum_{i=1}^{p_{l}}
+        D_{i}^{(l)} X^{(l)} u^{(l+1)}_{m, i, j}}_+                           \\
+         & = \rbr{\sum_{m=1}^{d_{l+1} a_{l+1}} \sum_{i=1}^{p_{l}}
+        D_{i}^{(l)} X^{(l)} u^{(l)}_{m, i} \cdot W_{m, ij}^{(l+1)}}_+        \\
+         & = \rbr{\sum_{m=1}^{d_{l+1} a_{l+1}} \sum_{i=1}^{p_{l}}
+        \rbr{X^{(l)} u^{(l)}_{m, i}}_+ \cdot W_{m, ij}^{(l+1)}}_+,
     \end{align*}
-    which matches \cref{eq:assumed-structure} if \( d_l \geq d_{l+1} a_l p_l \).
+    which matches \cref{eq:assumed-structure} if \( d_l \geq d_{l+1} a_{l+1} p_{l} \).
 
     \begin{itemize}
         \item
-              \textcolor{red}{Is there a representer theorem that we can use to
-                  bound the number of neurons?}
-
+              \textcolor{red}{For two-layer ReLU networks with scalar outputs,
+                  arguments from other papers show we need only \( 2 * p_1 \) neurons.
+                  However, this new argument gives the number of neurons as \( d * p_{l}^2 \).
+                  This looseness comes from Carathéodory's theorem, which
+                  we don't need to use in the usual proof.
+                  I think this is because we eliminate \( W^{(2)} \)
+                  in the standard proof by splitting on its sign, which leads
+                  to a convex constraint set.
+                  Since we don't take the conic hull, there's no need to find
+                  a decomposition for the relaxed neurons in the convex program
+                  into neurons in the non-convex program. 
+                  One way we might be able to improve the argument here to is to
+                  use a version of
+                  Caratheodory's theorem restricted to an affine subspace.}
         \item
-              \textcolor{red}{This required number of neurons is very loose in
-                  the two-layer scalar setting.  Can we use a version of
-                  Caratheodory's theorem restricted to an affine subspace to improve
-                  this?}
+              \textcolor{red}{Is there a representer theorem that we can use to
+                  bound the number of neurons in the final solution?}
+
     \end{itemize}
 
 \end{proof}
